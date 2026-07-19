@@ -1,0 +1,5 @@
+pymediainfo>=6.1.0
+pyaaf2>=1.7.0
+ffmpeg-python>=0.2.0
+scipy>=1.11.0
+pytest
