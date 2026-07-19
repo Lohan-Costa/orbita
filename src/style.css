@@ -1,0 +1,248 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== Design tokens (from MSYNC design system) ===== */
+:root {
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f5f5f3;
+  --color-background-tertiary: #ececea;
+  --color-background-info: #e8f0fb;
+  --color-background-success: #e1f5ee;
+  --color-background-warning: #faeeda;
+  --color-background-danger: #fbeaea;
+
+  --color-border-tertiary: #e6e6e3;
+  --color-border-secondary: #d2d2cd;
+  --color-border-success: #bfe3d4;
+  --color-border-danger: #f0c6c6;
+
+  --color-text-primary: #1f2023;
+  --color-text-secondary: #56585c;
+  --color-text-tertiary: #9a9c9f;
+  --color-text-info: #185fa5;
+  --color-text-success: #0f6e56;
+  --color-text-warning: #854f0b;
+  --color-text-danger: #a32d2d;
+  --color-text-synced: #2d9d57;
+
+  --color-accent: #378add;
+
+  /* ===== Timeline =====
+     Identidade própria: tons dessaturados que convivem com a paleta clara do
+     MSYNC. As câmeras ciclam pelas 6 matizes (CAM A e CAM B se distinguem de
+     relance); o som direto tem verde próprio, para ler como "referência" e não
+     como "mais uma câmera". */
+  --tl-surface: #f5f5f3;
+  --tl-lane: #ececeb;
+  --tl-line: #dcdcd8;
+  --tl-ink-3: #8a8a85;
+  --tl-accent: #378add;
+
+  --tl-track-1: #5b8fc9;
+  --tl-track-2: #4f9d94;
+  --tl-track-3: #8479c2;
+  --tl-track-4: #c98f4f;
+  --tl-track-5: #bd6a86;
+  --tl-track-6: #6aa54f;
+
+  /* Waveform: branco translúcido sobre o corpo do clipe — a forma aparece sem
+     brigar com a cor da track. */
+  --tl-waveform: rgba(255, 255, 255, 0.5);
+  --tl-waveform-ref: rgba(255, 255, 255, 0.55);
+
+  --tl-reference: #3f9d6b;
+
+  /* Sinalizado: âmbar + hachura + borda. Redundante de propósito — um sync
+     duvidoso não pode passar despercebido. */
+  --tl-flagged: #d99a4a;
+  --tl-flagged-hatch: rgba(0, 0, 0, 0.16);
+  --tl-flagged-border: #a3690f;
+
+  /* Movido à mão, ainda NÃO confirmado: roxo. Distinto do âmbar (o sistema
+     desconfia) e do teal (revisado) — aqui quem mexeu foi o usuário, e ainda
+     falta ele dizer que está bom. */
+  --tl-adjusted: #7d63c9;
+  --tl-adjusted-border: #4e3a8c;
+
+  /* Confirmado à mão: teal distinto das câmeras e do som direto — mostra o que
+     já foi revisado sem parecer "mais uma câmera". */
+  --tl-confirmed: #2f8f8a;
+  --tl-confirmed-border: #1d635f;
+
+  /* Posicionado só pelo TIMECODE, SEM verificar o áudio: ardósia dessaturada. Ela
+     diz "está no lugar, mas ninguém conferiu" — de propósito apagada perto do azul
+     vivo da câmera e do verde do som, que são syncs CONFIRMADOS pela forma de onda.
+     Um TC puro pode estar errado, e não pode se disfarçar de sync verificado. */
+  --tl-timecode: #7f8a9c;
+  --tl-timecode-border: #4f5763;
+
+  /* Agulha: vermelho, a convenção de todo NLE. É a única coisa vermelha aqui —
+     nenhum estado de clipe usa essa cor, então ela nunca se confunde com dado. */
+  --tl-playhead: #e04545;
+}
+
+/* Entrada dos clipes na timeline: desliza da esquerda desacelerando.
+   Espelha APPEAR_MS / APPEAR_SLIDE_PX / easeOutCubic em Timeline/draw.ts — o
+   canvas desenha o corpo e a waveform, este div desenha a borda e o rótulo, e
+   os dois precisam se mover juntos. */
+@keyframes tl-clip-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.tl-clip {
+  animation: tl-clip-in 260ms cubic-bezier(0.215, 0.61, 0.355, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tl-clip {
+    animation: none;
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--color-background-primary);
+  color: var(--color-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
+    sans-serif;
+  font-size: 13px;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+
+/* ===== Component classes ===== */
+@layer components {
+  /* Status pills */
+  .status-pill {
+    @apply text-[10px] px-1.5 py-px rounded-[10px] whitespace-nowrap;
+  }
+  .pill-success {
+    background: #e1f5ee;
+    color: #0f6e56;
+  }
+  .pill-warning {
+    background: #faeeda;
+    color: #854f0b;
+  }
+  .pill-info {
+    background: #e6f1fb;
+    color: #185fa5;
+  }
+  .pill-error {
+    background: #fcebeb;
+    color: #a32d2d;
+  }
+  .pill-muted {
+    background: var(--color-background-tertiary);
+    color: var(--color-text-secondary);
+  }
+
+  /* Toolbar / compact button */
+  .tbtn {
+    @apply inline-flex items-center gap-1 bg-transparent border-[0.5px] border-line-strong
+      rounded-md px-2 py-1 text-[11px] text-ink-2 whitespace-nowrap cursor-pointer
+      hover:bg-surface-2 transition-colors;
+  }
+  .tbtn.active {
+    @apply bg-surface-2 text-ink border-line-strong font-medium;
+  }
+  .tbtn.primary {
+    @apply bg-accent border-accent text-white hover:opacity-90;
+  }
+  .tbtn.danger {
+    @apply border-line-danger text-ink-danger hover:bg-surface-danger;
+  }
+  /* Ação de destaque secundária (ex.: Sincronizar) — contorno na cor de acento,
+     para não se confundir com um .tbtn qualquer nem competir com o .primary. */
+  .tbtn.outline-accent {
+    @apply border-accent text-accent;
+  }
+  .tbtn.outline-accent:hover {
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+  }
+  /* Desabilitado precisa continuar LEGÍVEL — opacidade baixa demais faz o botão
+     parecer apagado/quebrado em vez de "não é a hora ainda". */
+  .tbtn:disabled,
+  .seg-btn:disabled {
+    @apply opacity-60 cursor-not-allowed hover:bg-transparent;
+  }
+
+  /* Radio-style segmented control button */
+  .seg-btn {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 text-[11px] text-ink-2
+      cursor-pointer whitespace-nowrap transition-colors border-[0.5px] border-line-strong;
+  }
+  .seg-btn:first-child {
+    @apply rounded-l-md;
+  }
+  .seg-btn:last-child {
+    @apply rounded-r-md;
+  }
+  .seg-btn.selected {
+    @apply bg-surface-2 text-ink font-medium;
+  }
+
+  /* Panel header */
+  .panel-title {
+    @apply text-[11px] font-medium text-ink-2 flex items-center gap-1.5;
+  }
+
+  /* Campo de entrada compacto — mesma caixa do .tbtn, para os controles se
+     alinharem na mesma linha sem parecerem de sistemas diferentes. */
+  .field {
+    @apply bg-surface border-[0.5px] border-line-strong rounded-md px-2 py-1
+      text-[11px] text-ink outline-none transition-colors
+      focus:border-accent;
+  }
+  .field.invalid {
+    @apply border-line-danger text-ink-danger;
+  }
+  /* Timecode é sempre monoespaçado: os dígitos não podem dançar ao digitar. */
+  .field-tc {
+    @apply font-mono tabular-nums;
+  }
+
+  /* Solo/Mute da track — o par S/M empilhado, como numa mesa de som. */
+  .sm-btn {
+    @apply w-[15px] h-[15px] flex items-center justify-center rounded-[2px]
+      border-[0.5px] border-line-strong bg-transparent
+      text-[9px] font-semibold leading-none text-ink-3 cursor-pointer
+      hover:bg-surface-3 transition-colors;
+  }
+  .sm-btn.solo {
+    @apply bg-amber-400 border-amber-500 text-black;
+  }
+  .sm-btn.mute {
+    @apply bg-red-500 border-red-600 text-white;
+  }
+}
+
+/* Thin scrollbars */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-secondary);
+  border-radius: 6px;
+  border: 3px solid var(--color-background-primary);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}

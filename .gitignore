@@ -1,0 +1,54 @@
+# Segredos
+.env
+.env.*
+!.env.example
+
+# Conhecimento de desenvolvimento — NUNCA vai para o repositório público.
+# Quarentena do que é privado (decisões, validações, engenharia reversa, notas
+# do beta). O artefato público é GERADO por allowlist e não inclui isto; manter
+# fora do git também protege contra um push acidental deste repo privado.
+# As memórias do Claude Code e a base `bancodedadosnles` seguem EXTERNAS ao repo.
+.dev/
+CLAUDE SKILL/
+
+# Dependências e build
+node_modules/
+dist/
+dist-ssr/
+target/
+src-tauri/gen/
+src-tauri/binaries/
+src-python/.venv/
+src-python/__pycache__/
+src-python/**/__pycache__/
+src-python/build/
+src-python/dist/
+src-python/*.spec
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Mídia de teste e projetos gerados (18 GB — fica só na máquina)
+midias-projetos-exemplo/
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.local
+# Resource forks do macOS em volumes externos (exFAT/NTFS)
+._*
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
