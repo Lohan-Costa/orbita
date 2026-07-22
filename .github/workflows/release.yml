@@ -1,0 +1,92 @@
+# .github/workflows/release.yml
+#
+# Builda o Órbita (macOS Apple Silicon + Windows) e publica os instaladores
+# como GitHub Release, sempre que uma tag v* chega neste repositório.
+#
+# Roda no repo PÚBLICO (é lá que os "Releases" ficam pra quem baixa) — o
+# publish.py do repo privado leva este arquivo pra lá via allowlist, e o
+# push da mesma tag que ele faz é o que dispara isto.
+#
+# Sem assinatura Apple Developer nem code signing do Windows: o app funciona,
+# mas o macOS mostra "está danificado" (contornado com `xattr -cr`) e o
+# Windows mostra aviso do SmartScreen — ver a seção Download do README.
+
+name: Build and release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    # Este arquivo mora no repo PRIVADO (fonte da verdade) e é levado pro
+    # público via allowlist do publish.py — mas qualquer workflow em
+    # .github/workflows/ dispara em push de tag NO REPO ONDE ELE ESTÁ. Sem
+    # esta trava, uma tag v* aciona o build duas vezes: aqui (desnecessário —
+    # o release deve existir só no público, onde as pessoas baixam) e lá.
+    if: github.repository == 'Lohan-Costa/orbita'
+    # O GITHUB_TOKEN automático do Actions é read-only por padrão em repos
+    # novos. tauri-action precisa CRIAR o Release e subir os instaladores —
+    # sem isto, "Resource not accessible by integration" ao chamar a API de
+    # releases (descoberto no primeiro run real, depois do build passar em
+    # macOS E Windows).
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            rust_target: aarch64-apple-darwin
+          - platform: windows-latest
+            rust_target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.rust_target }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar deps do frontend
+        run: npm ci
+
+      - name: Instalar deps do sidecar Python
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r src-python/requirements-build.txt
+
+      # Empacota o sidecar ANTES do `tauri-action` — ele espera o binário já
+      # em src-tauri/binaries/orbita-python-<target>[.exe] (bundle.externalBin
+      # do tauri.conf.json). Ver src-python/build_sidecar.py — validado
+      # manualmente (sync + export de verdade) antes deste workflow existir.
+      - name: Empacotar o sidecar Python
+        run: python src-python/build_sidecar.py ${{ matrix.rust_target }}
+
+      # ffmpeg/ffprobe EMBARCADOS — o app não pode exigir ffmpeg instalado no
+      # usuário (o sync morria com `[Errno 2] ... 'ffmpeg'`). O script baixa os
+      # estáticos para `binaries/<nome>-<triple>[.exe]`, que o `externalBin` do
+      # Tauri copia como `ffmpeg`/`ffprobe` ao lado do executável. Mesma
+      # implementação usada pelos `setup.*`. Resolvedor em runtime:
+      # `src-tauri/src/ffbins.rs` (Rust) e `src-python/media/fftools.py` (sidecar).
+      - name: Baixar ffmpeg/ffprobe embarcados
+        run: python src-python/fetch_ffmpeg.py ${{ matrix.rust_target }}
+
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "Órbita ${{ github.ref_name }}"
+          releaseBody: "Alpha — ver o README para instruções de instalação (macOS precisa de `xattr -cr`, o app não tem assinatura Apple Developer)."
+          releaseDraft: false
+          prerelease: true
