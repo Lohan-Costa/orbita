@@ -1,0 +1,16 @@
+* text=auto eol=lf
+
+# Scripts de shell (macOS/Linux) e o entrypoint .command PRECISAM de LF.
+*.sh text eol=lf
+*.command text eol=lf
+
+# Batch/scripts do Windows PRECISAM de CRLF: o cmd.exe procura os labels de
+# `goto` byte a byte e NÃO os encontra com LF puro — a janela abre e fecha na
+# hora (foi o que quebrou o dev.bat). Ver .dev/DECISIONS.md.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+*.png binary
+*.jpg binary
+*.ico binary
+*.icns binary
